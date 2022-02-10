@@ -173,7 +173,7 @@ module Alu_RISC (alu_zero_flag, alu_out, data_1, data_2, sel);
   parameter WR		= 4'b0110;
   parameter BR		= 4'b0111;
   parameter BRZ 		= 4'b1000;
-
+  parameter RD2	= 4'b1001; //new Opcode
   output 			alu_zero_flag;
   output [word_size-1: 0] 	alu_out;
   input 	[word_size-1: 0] 	data_1, data_2;
@@ -188,6 +188,7 @@ module Alu_RISC (alu_zero_flag, alu_out, data_1, data_2, sel);
       SUB:	alu_out = data_2 - data_1;
       AND:	alu_out = data_1 & data_2;
       NOT:	alu_out = ~ data_2;	 // Gets data from Bus_1
+		RD2:  alu_out = data_1 + data_2; // Addition of Reg_y(offset) +Bus_1(base)
       default: 	alu_out = 0;
     endcase 
 endmodule
@@ -207,9 +208,10 @@ module Control_Unit (
   parameter S_idle = 0, S_fet1 = 1, S_fet2 = 2, S_dec = 3;
   parameter  S_ex1 = 4, S_rd1 = 5, S_rd2 = 6;  
   parameter S_wr1 = 7, S_wr2 = 8, S_br1 = 9, S_br2 = 10, S_halt = 11;  
+  parameter S_rd3 = 12, S_rd4 = 13, S_rd5 = 14; //New State Codes
   // Opcodes
   parameter NOP = 0, ADD = 1, SUB = 2, AND = 3, NOT = 4;
-  parameter RD  = 5, WR =  6,  BR =  7, BRZ = 8;  
+  parameter RD  = 5, WR =  6,  BR =  7, BRZ = 8,   RD2=9;// New Opcode RD2
   // Source and Destination Codes  
   parameter R0 = 0, R1 = 1, R2 = 2, R3 = 3;  
 
@@ -322,6 +324,15 @@ S_fet1:		begin
 			    	    next_state = S_rd1;
 			    	    Sel_PC = 1; Sel_Bus_1 = 1; Load_Add_R = 1; 
   end // RD
+  
+  RD2: begin
+			    	    next_state = S_rd3;
+			    	    Sel_PC = 1; // mux 1 gives PC
+						 Sel_Bus_1 = 1; //mux 2 gives bus 1 
+						 Load_Reg_Y = 1; // reg y loads address
+  end // RD2
+  
+  
 
 			  	  WR: begin
 			    	    next_state = S_wr1;
@@ -382,7 +393,36 @@ S_fet1:		begin
 			    	    default : 	err_flag = 1;
 			  	  endcase  
 				end
-
+				// S_RD3 HERE
+				S_rd3:		begin 
+				next_state = S_rd4; //next state
+			  	  Sel_Mem = 1;  // mux 2 will give memory output
+			  	  Load_Add_R = 1; //address reg will store from bus 2 (memory output) 
+				  case  (src)
+		      		      R0: 		Sel_R0 = 1; 
+		      		      R1: 		Sel_R1 = 1; 
+		      		      R2: 		Sel_R2 = 1;
+		      		      R3: 		Sel_R3 = 1; 
+		      		      default : 	err_flag = 1;
+		    		    endcase  // the bus 1 will give value from register and stuff.
+				end
+				S_rd4:		begin 
+  			  	  next_state = S_rd5; //next state
+			  	  Load_Reg_Z = 1; // load output of ALU
+			  	  Sel_ALU = 1;  // BUS2 to give ALU output
+				end 
+				S_rd5:		begin 
+  			  	  next_state = S_fet1;
+			  	  Sel_Mem = 1;
+		 	   	  case  (dest) 
+    			    	    R0: 		Load_R0 = 1; 
+		 	    	    R1: 		Load_R1 = 1; 
+		 	    	    R2: 		Load_R2 = 1; 
+		 	    	    R3: 		Load_R3 = 1; 
+			    	    default : 	err_flag = 1;
+			  	  endcase  
+				end
+				
     	      	S_wr2:		begin 
      			  	  next_state = S_fet1;
 			  	  write = 1;
