@@ -410,17 +410,18 @@ S_fet1:		begin
   			  	  next_state = S_rd5; //next state
 			  	  Load_Reg_Z = 1; // load output of ALU
 			  	  Sel_ALU = 1;  // BUS2 to give ALU output
+			  	  Inc_PC = 1; // incrementing Program Counter for next instruction
 				end 
 				S_rd5:		begin 
-  			  	  next_state = S_fet1;
-			  	  Sel_Mem = 1;
+  			  	  next_state = S_fet1; // for loading the address register with  address for next instruction from PC.
+			  	  Sel_Mem = 1; // so that BUS 2 gives Memory.
 		 	   	  case  (dest) 
     			    	    R0: 		Load_R0 = 1; 
 		 	    	    R1: 		Load_R1 = 1; 
 		 	    	    R2: 		Load_R2 = 1; 
 		 	    	    R3: 		Load_R3 = 1; 
 			    	    default : 	err_flag = 1;
-			  	  endcase  
+			  	  endcase  //so that value from bus2(memory) loads into destination register 
 				end
 				
     	      	S_wr2:		begin 
