@@ -188,7 +188,9 @@ module Alu_RISC (alu_zero_flag, alu_out, data_1, data_2, sel);
       SUB:	alu_out = data_2 - data_1;
       AND:	alu_out = data_1 & data_2;
       NOT:	alu_out = ~ data_2;	 // Gets data from Bus_1
+      
 		RD2:  alu_out = data_1 + data_2; // Addition of Reg_y(offset) +Bus_1(base)
+
       default: 	alu_out = 0;
     endcase 
 endmodule
@@ -208,7 +210,9 @@ module Control_Unit (
   parameter S_idle = 0, S_fet1 = 1, S_fet2 = 2, S_dec = 3;
   parameter  S_ex1 = 4, S_rd1 = 5, S_rd2 = 6;  
   parameter S_wr1 = 7, S_wr2 = 8, S_br1 = 9, S_br2 = 10, S_halt = 11;  
+
   parameter S_rd3 = 12, S_rd4 = 13, S_rd5 = 14; //New State Codes
+
   // Opcodes
   parameter NOP = 0, ADD = 1, SUB = 2, AND = 3, NOT = 4;
   parameter RD  = 5, WR =  6,  BR =  7, BRZ = 8,   RD2=9;// New Opcode RD2
@@ -329,7 +333,7 @@ S_fet1:		begin
 			    	    next_state = S_rd3;
 			    	    Sel_PC = 1; // mux 1 gives PC
 						 Sel_Bus_1 = 1; //mux 2 gives bus 1 
-						 Load_Reg_Y = 1; // reg y loads address
+						 Load_Add_R = 1; // stores adddress from bus1(PC) to address register
   end // RD2
   
   
@@ -397,7 +401,7 @@ S_fet1:		begin
 				S_rd3:		begin 
 				next_state = S_rd4; //next state
 			  	  Sel_Mem = 1;  // mux 2 will give memory output
-			  	  Load_Add_R = 1; //address reg will store from bus 2 (memory output) 
+				  Load_Reg_Y = 1; // reg y loads address
 				  case  (src)
 		      		      R0: 		Sel_R0 = 1; 
 		      		      R1: 		Sel_R1 = 1; 
@@ -408,20 +412,21 @@ S_fet1:		begin
 				end
 				S_rd4:		begin 
   			  	  next_state = S_rd5; //next state
-			  	  Load_Reg_Z = 1; // load output of ALU
+			  	  Load_Reg_Z = 1; // Set Reg Z flag for ALU
 			  	  Sel_ALU = 1;  // BUS2 to give ALU output
-			  	  Inc_PC = 1; // incrementing Program Counter for next instruction
+			  	  Load_Add_R = 1; //address reg will store from bus 2 (ALU OutPUT) 
 				end 
 				S_rd5:		begin 
   			  	  next_state = S_fet1; // for loading the address register with  address for next instruction from PC.
 			  	  Sel_Mem = 1; // so that BUS 2 gives Memory.
 		 	   	  case  (dest) 
-    			    	    R0: 		Load_R0 = 1; 
+    			    	 R0: 		Load_R0 = 1; 
 		 	    	    R1: 		Load_R1 = 1; 
 		 	    	    R2: 		Load_R2 = 1; 
 		 	    	    R3: 		Load_R3 = 1; 
 			    	    default : 	err_flag = 1;
 			  	  endcase  //so that value from bus2(memory) loads into destination register 
+			  	  Inc_PC = 1; // incrementing Program Counter for next instruction
 				end
 				
     	      	S_wr2:		begin 

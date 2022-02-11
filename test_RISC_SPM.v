@@ -13,10 +13,23 @@ module test_RISC_SPM ();
   wire [word_size-1:0] word0, word1, word2, word3, word4, word5, word6;
   wire [word_size-1:0] word7, word8, word9, word10, word11, word12, word13;
   wire [word_size-1:0] word14;
-
+	
   wire [word_size-1:0] word128, word129, word130, word131, word132, word255;
   wire [word_size-1:0] word133, word134, word135, word136, word137;
   wire [word_size-1:0] word138, word139, word140;
+  
+  wire [word_size-1:0] reg0, reg1, reg2, reg3, regy, regz, pc, alu_out, mem_data_out, address; //for getting register values.
+  
+  assign reg0 = M2.M0_Processor.R0.data_out;
+  assign reg1 = M2.M0_Processor.R1.data_out;
+  assign reg2 = M2.M0_Processor.R2.data_out;
+  assign reg3 = M2.M0_Processor.R3.data_out;
+  assign regy = M2.M0_Processor.Reg_Y.data_out;
+  assign regz = M2.M0_Processor.Reg_Z.data_out;
+  assign pc = M2.M0_Processor.PC.count;
+  assign alu_out = M2.M0_Processor.ALU.alu_out;
+  assign mem_data_out = M2.M2_SRAM.data_out;
+  assign address = M2.M0_Processor.Add_R.data_out;
   assign word0 = M2.M2_SRAM.memory[0];
   assign word1 = M2.M2_SRAM.memory[1];
   assign word2 = M2.M2_SRAM.memory[2];
@@ -53,8 +66,6 @@ module test_RISC_SPM ();
 
   assign word255 = M2.M2_SRAM.memory[255];
 
- initial #2800 $finish;
- 
 // Initialize Memory
 
 initial begin
@@ -80,13 +91,17 @@ initial begin
 
   M2.M2_SRAM.memory[9] = 8'b0010_00_01;		// Sub R1-R0 to R1
 
-  M2.M2_SRAM.memory[10] = 8'b1000_00_00;		// BRZ 
-  M2.M2_SRAM.memory[11] = 134;				// Holds address for BRZ
+  M2.M2_SRAM.memory[10] = 8'b0101_00_11;		// Read 135 to R3
+  M2.M2_SRAM.memory[11] = 135;
+  
+  M2.M2_SRAM.memory[12] = 8'b1001_11_10;		//  Read mem(R3 + 118) to R2
+  M2.M2_SRAM.memory[13] = 121;
+  
+  M2.M2_SRAM.memory[14] = 8'b1000_00_00;		// BRZ 
+  M2.M2_SRAM.memory[15] = 134;				// Holds address for BRZ
 
-
-  M2.M2_SRAM.memory[12] = 8'b0001_10_11;		// Add R2+R3 to R3
-  M2.M2_SRAM.memory[13] = 8'b0111_00_11;		// BR
-  M2.M2_SRAM.memory[14] = 140;
+  M2.M2_SRAM.memory[16] = 8'b0111_00_11;		// BR
+  M2.M2_SRAM.memory[17] = 140;
 
   //M2.M2_SRAM.memory[13] = 8'b0110_11_00;		// WR R3 to memory
   //M2.M2_SRAM.memory[14] = 131;			
@@ -99,7 +114,7 @@ initial begin
   M2.M2_SRAM.memory[130] = 2;
   M2.M2_SRAM.memory[131] = 0;
   M2.M2_SRAM.memory[134] = 139;
-  //M2.M2_SRAM.memory[135] = 0;
+  M2.M2_SRAM.memory[135] = 7;
   M2.M2_SRAM.memory[139] = 8'b1111_00_00;		// HALT
   M2.M2_SRAM.memory[140] = 9;				//  Recycle
 end 
