@@ -402,6 +402,9 @@ S_fet1:		begin
 				next_state = S_rd4; //next state
 			  	  Sel_Mem = 1;  // mux 2 will give memory output
 				  Load_Reg_Y = 1; // reg y loads address
+				end
+				S_rd4:		begin 
+  			  	  next_state = S_rd2; //next state
 				  case  (src)
 		      		      R0: 		Sel_R0 = 1; 
 		      		      R1: 		Sel_R1 = 1; 
@@ -409,25 +412,11 @@ S_fet1:		begin
 		      		      R3: 		Sel_R3 = 1; 
 		      		      default : 	err_flag = 1;
 		    		    endcase  // the bus 1 will give value from register and stuff.
-				end
-				S_rd4:		begin 
-  			  	  next_state = S_rd5; //next state
 			  	  Load_Reg_Z = 1; // Set Reg Z flag for ALU
 			  	  Sel_ALU = 1;  // BUS2 to give ALU output
 			  	  Load_Add_R = 1; //address reg will store from bus 2 (ALU OutPUT) 
-				end 
-				S_rd5:		begin 
-  			  	  next_state = S_fet1; // for loading the address register with  address for next instruction from PC.
-			  	  Sel_Mem = 1; // so that BUS 2 gives Memory.
-		 	   	  case  (dest) 
-    			    	 R0: 		Load_R0 = 1; 
-		 	    	    R1: 		Load_R1 = 1; 
-		 	    	    R2: 		Load_R2 = 1; 
-		 	    	    R3: 		Load_R3 = 1; 
-			    	    default : 	err_flag = 1;
-			  	  endcase  //so that value from bus2(memory) loads into destination register 
 			  	  Inc_PC = 1; // incrementing Program Counter for next instruction
-				end
+				end 
 				
     	      	S_wr2:		begin 
      			  	  next_state = S_fet1;
